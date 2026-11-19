@@ -60,6 +60,9 @@ jobs:
           - repository: users-migrations
             context: .
             dockerfile: migrations/Dockerfile
+          - repository: users-controller
+            context: controller
+            dockerfile: controller/Dockerfile
     uses: ./.github/workflows/docker-pack-n-push.yml
     with:
       repository: ${{ matrix.repository }}
