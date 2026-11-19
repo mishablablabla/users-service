@@ -8,3 +8,4 @@ web/dist/
 web/.angular/
 dist/
 .DS_Store
+*.log
