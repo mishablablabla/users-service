@@ -7,7 +7,7 @@ on:
   workflow_call:
     inputs:
       repository:
-        description: Docker Hub repository name without the user part (e.g. users-api)
+        description: Docker Hub repository name without the user part (e.g. cicd-users-api)
         required: true
         type: string
       tag:

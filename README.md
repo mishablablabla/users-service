@@ -46,13 +46,13 @@ docker run --rm -p 8080:8080 users-api:dev     # http://localhost:8080/api/docs
 
 ### Налаштування Azure DevOps (Лаба 1, завдання 4) — робиться вручну в UI
 
-1. **Docker Hub:** створіть репозиторій `users-api` (Docker Hub → Create repository).
+1. **Docker Hub:** створіть репозиторії `cicd-users-api`, `cicd-users-web`, `cicd-users-migrations`, `cicd-users-controller` (Docker Hub → Create repository).
    Створіть Access Token (Account settings → Security → New access token, права *Read & Write*).
 2. **Azure DevOps:** створіть проєкт (будь-яке ім'я).
 3. *Project settings → Service connections → New → Docker Registry → Docker Hub*: вкажіть username і token,
    назва connection — **`dockerhub-connection`** (так її очікує `azure-pipelines.yml`).
 4. *Pipelines → New pipeline → GitHub → ваш репозиторій → Existing Azure Pipelines YAML file → `/azure-pipelines.yml`*.
-5. У pipeline → *Variables* додайте `DOCKERHUB_REPOSITORY` = `<dockerhub-user>/users-api`.
+5. У pipeline → *Variables* додайте `DOCKERHUB_REPOSITORY` = `mishablablabla1/cicd-users-api`.
 6. Зробіть push у `main` — pipeline запускається автоматично: Build → Test → Docker build → tags (`latest`, `$(Build.BuildId)`) → push.
 
 ## Лаба 2 — GitHub Actions
@@ -64,7 +64,7 @@ docker run --rm -p 8080:8080 users-api:dev     # http://localhost:8080/api/docs
   `repository`, `tag`, `context`, `dockerfile`, `push`. Для `main` образ публікується в Docker Hub,
   для інших гілок — зберігається як artifact workflow.
 * Секрети (*Repo → Settings → Secrets and variables → Actions*): **`DOCKERHUB_USERNAME`**, **`DOCKERHUB_TOKEN`**.
-  Репозиторії Docker Hub: `users-api`, `users-web`, `users-migrations` (+ `users-controller` для лаби 5).
+  Репозиторії Docker Hub: `cicd-users-api`, `cicd-users-web`, `cicd-users-migrations`, `cicd-users-controller` (останній — для лаби 5).
 
 ## Лаба 4 — Kubernetes / Helm
 

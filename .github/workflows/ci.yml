@@ -51,16 +51,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - repository: users-api
+          - repository: cicd-users-api
             context: api
             dockerfile: api/Dockerfile
-          - repository: users-web
+          - repository: cicd-users-web
             context: web
             dockerfile: web/Dockerfile
-          - repository: users-migrations
+          - repository: cicd-users-migrations
             context: .
             dockerfile: migrations/Dockerfile
-          - repository: users-controller
+          - repository: cicd-users-controller
             context: controller
             dockerfile: controller/Dockerfile
     uses: ./.github/workflows/docker-pack-n-push.yml

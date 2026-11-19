@@ -14,7 +14,7 @@ spec:
       serviceAccountName: databasebackup-controller
       containers:
         - name: controller
-          image: users-controller:dev     # replace with <dockerhub-user>/users-controller:latest outside kind
+          image: users-controller:dev     # replace with mishablablabla1/cicd-users-controller:latest outside kind
           imagePullPolicy: IfNotPresent
           env:
             - { name: WATCH_NAMESPACE, value: demo }

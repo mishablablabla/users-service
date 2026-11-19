@@ -1,6 +1,6 @@
 api:
   image:
-    repository: DOCKERHUB_USER/users-api
+    repository: mishablablabla1/cicd-users-api
     tag: latest
     pullPolicy: IfNotPresent
   replicas: 1
@@ -14,7 +14,7 @@ api:
 
 web:
   image:
-    repository: DOCKERHUB_USER/users-web
+    repository: mishablablabla1/cicd-users-web
     tag: latest
     pullPolicy: IfNotPresent
   replicas: 1
@@ -27,7 +27,7 @@ web:
 
 migration:
   image:
-    repository: DOCKERHUB_USER/users-migrations
+    repository: mishablablabla1/cicd-users-migrations
     tag: latest
     pullPolicy: IfNotPresent
   backoffLimit: 10

@@ -2,7 +2,7 @@
 #
 # Prerequisites in Azure DevOps (see README):
 #   * Service connection of type "Docker Registry" (Docker Hub) named: dockerhub-connection
-#   * Pipeline variable (or edit below): dockerHubRepository = <dockerhub-user>/users-api
+#   * Pipeline variable (or edit below): dockerHubRepository = <dockerhub-user>/cicd-users-api (напр. mishablablabla1/cicd-users-api)
 
 trigger:
   branches:
