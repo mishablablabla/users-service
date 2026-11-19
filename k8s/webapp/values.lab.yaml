@@ -1,0 +1,13 @@
+# Environment "lab": local kind cluster with images loaded via `kind load docker-image`
+api:
+  image: { repository: users-api, tag: dev, pullPolicy: Never }
+web:
+  image: { repository: users-web, tag: dev, pullPolicy: Never }
+migration:
+  image: { repository: users-migrations, tag: dev, pullPolicy: Never }
+db:
+  password: lab-password
+ingress:
+  enabled: true
+  className: nginx
+  host: webapp.lab.test

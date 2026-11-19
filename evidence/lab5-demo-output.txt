@@ -1,0 +1,85 @@
+
+
+########## 0. Validation: DatabaseBackup without spec.schedule must be rejected ##########
+The DatabaseBackup "users-db-backup-invalid" is invalid: spec.schedule: Required value
+
+
+########## 1. CronJob is created for the existing DatabaseBackup; changing spec.schedule updates the SAME CronJob ##########
+NAME                                                SCHEDULE    TIMEZONE   AGE
+databasebackup.backup.example.com/users-db-backup   0 2 * * *   Etc/UTC    19s
+
+NAME                            SCHEDULE    TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+cronjob.batch/users-db-backup   0 2 * * *   Etc/UTC    False     0        <none>          20s
+databasebackup.backup.example.com/users-db-backup patched
+NAME                                                SCHEDULE      TIMEZONE   AGE
+databasebackup.backup.example.com/users-db-backup   */5 * * * *   Etc/UTC    25s
+
+NAME                            SCHEDULE      TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+cronjob.batch/users-db-backup   */5 * * * *   Etc/UTC    False     0        <none>          25s
+CronJob UID before=45b4c669-9f4f-43ab-89ee-98f6a9145dac after=45b4c669-9f4f-43ab-89ee-98f6a9145dac (same object: yes)
+
+
+########## 2. Delete the managed CronJob -> the controller recreates it ##########
+cronjob.batch "users-db-backup" deleted from demo namespace
+NAME              SCHEDULE      TIMEZONE   SUSPEND   ACTIVE   LAST SCHEDULE   AGE
+users-db-backup   */5 * * * *   Etc/UTC    False     0        <none>          5s
+2026-11-19 16:34:12,821 INFO starting controller, namespace=demo
+2026-11-19 16:34:14,343 INFO demo/users-db-backup: created CronJob (schedule=0 2 * * *)
+2026-11-19 16:34:34,197 INFO demo/users-db-backup: updated CronJob (schedule=*/5 * * * *)
+2026-11-19 16:34:39,416 INFO demo/users-db-backup: created CronJob (schedule=*/5 * * * *)
+
+
+########## 3a. Manual Job from the CronJob template, wait for completion, logs ##########
+job.batch/backup-manual created
+job.batch/backup-manual condition met
+Backup archive written: /backups/users-20261119T163453Z.dump
+
+
+########## 3b. Helper Pod with PostgreSQL client: list archive, restore into an empty DB, show the control record ##########
+pod/pg-restore-helper created
+pod/pg-restore-helper condition met
+Archive: /backups/users-20261119T163453Z.dump
+total 4K     
+-rw-r--r--    1 root     root        3.7K Nov 19 16:34 users-20261119T163453Z.dump
+--- pg_restore --list ---
+;
+; Archive created at 2026-11-19 16:34:53 UTC
+;     dbname: users
+;     TOC Entries: 15
+;     Compression: gzip
+;     Dump Version: 1.15-0
+;     Format: CUSTOM
+;     Integer: 4 bytes
+;     Offset: 8 bytes
+;     Dumped from database version: 16.16
+;     Dumped by pg_dump version: 16.16
+;
+;
+; Selected TOC Entries:
+;
+215; 1259 16385 TABLE public alembic_version users
+217; 1259 16391 TABLE public users users
+216; 1259 16390 SEQUENCE public users_id_seq users
+3464; 0 0 SEQUENCE OWNED BY public users_id_seq users
+3305; 2604 16394 DEFAULT public users id users
+--- restore into empty DB users_restore ---
+DROP DATABASE
+NOTICE:  database "users_restore" does not exist, skipping
+CREATE DATABASE
+--- control record in restored DB ---
+ id | name |      email      
+----+------+-----------------
+  1 | Ada  | ada@example.com
+(1 row)
+
+pod "pg-restore-helper" deleted from demo namespace
+
+
+########## 4. RBAC of the controller ServiceAccount (expected: yes, yes, no) ##########
+list databasebackups: yes
+create cronjobs:      yes
+list secrets:         no
+
+
+########## Who creates what ##########
+DatabaseBackup (custom resource) --[our controller]--> CronJob --[kube-controller-manager: CronJob controller]--> Job --[kube-controller-manager: Job controller]--> Pod

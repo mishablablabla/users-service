@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: users-db-migration-job
+  labels: {{- include "webapp.labels" . | nindent 4 }}
+  annotations:
+    # Runs after DB + API are installed; `helm install --wait-for-jobs` waits for it.
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: {{ .Values.migration.backoffLimit }}
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: migrate
+          image: {{ include "webapp.image" .Values.migration.image }}
+          imagePullPolicy: {{ .Values.migration.image.pullPolicy }}
+          envFrom:
+            - secretRef:
+                name: users-api-secret

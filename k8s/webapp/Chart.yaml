@@ -1,0 +1,7 @@
+apiVersion: v2
+name: webapp
+description: Users web application - Angular frontend, FastAPI backend, PostgreSQL and a migration Job
+type: application
+# Chart version (the package version) and the application version are read from this file.
+version: 0.1.0
+appVersion: "latest"

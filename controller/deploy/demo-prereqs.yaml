@@ -1,0 +1,31 @@
+# Demo namespace, connection Secret (demo values) and the PVC for archives.
+# PGHOST is the DNS name of the PostgreSQL Service installed by the Helm chart (release in ns "demo").
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: users-db-connection
+  namespace: demo
+type: Opaque
+stringData:
+  PGHOST: users-db-svc.demo.svc.cluster.local
+  PGPORT: "5432"
+  PGDATABASE: users
+  PGUSER: users
+  PGPASSWORD: lab-password
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-backups
+  namespace: demo
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+  # uses the cluster's default StorageClass

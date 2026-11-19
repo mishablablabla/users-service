@@ -1,0 +1,69 @@
+{{- if .Values.db.storage.storageClass.create }}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.db.storage.storageClass.name }}
+  labels: {{- include "webapp.labels" . | nindent 4 }}
+provisioner: {{ .Values.db.storage.storageClass.provisioner }}
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Delete
+---
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: users-db-svc
+  labels: {{- include "webapp.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  selector:
+    app: users-db
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: users-db-ss
+  labels: {{- include "webapp.labels" . | nindent 4 }}
+spec:
+  serviceName: users-db-svc
+  replicas: 1
+  selector:
+    matchLabels:
+      app: users-db
+  template:
+    metadata:
+      labels:
+        app: users-db
+    spec:
+      containers:
+        - name: postgres
+          image: {{ .Values.db.image }}
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: users-api-secret
+          env:
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources: {{- toYaml .Values.db.resources | nindent 12 }}
+          volumeMounts:
+            - name: users-db-pvc
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: users-db-pvc
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: {{ .Values.db.storage.storageClass.name }}
+        resources:
+          requests:
+            storage: {{ .Values.db.storage.size }}

@@ -1,0 +1,78 @@
+# Lab 1: Azure DevOps CI pipeline (GitHub -> Azure Pipelines -> Docker Hub)
+#
+# Prerequisites in Azure DevOps (see README):
+#   * Service connection of type "Docker Registry" (Docker Hub) named: dockerhub-connection
+#   * Pipeline variable (or edit below): dockerHubRepository = <dockerhub-user>/users-api
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - README.md
+      - docs/*
+
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  dockerRegistryServiceConnection: dockerhub-connection
+  # Set this as a pipeline variable in the UI, e.g. myuser/users-api
+  dockerHubRepository: $(DOCKERHUB_REPOSITORY)
+
+stages:
+  - stage: Build
+    displayName: Build and test
+    jobs:
+      - job: build_test
+        displayName: Build project and run unit tests
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: "3.12"
+
+          - script: pip install -r api/requirements-dev.txt
+            displayName: Install dependencies (build)
+
+          - script: python -m pytest -q --junitxml=$(Build.ArtifactStagingDirectory)/test-results.xml
+            workingDirectory: api
+            displayName: Run unit tests
+
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFiles: $(Build.ArtifactStagingDirectory)/test-results.xml
+              testRunTitle: users-api unit tests
+
+  - stage: Docker
+    displayName: Docker image
+    dependsOn: Build
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: docker
+        displayName: Build, tag and push image
+        steps:
+          - task: Docker@2
+            displayName: Build image
+            inputs:
+              command: build
+              containerRegistry: $(dockerRegistryServiceConnection)
+              repository: $(dockerHubRepository)
+              Dockerfile: api/Dockerfile
+              buildContext: api
+              tags: |
+                latest
+                $(Build.BuildId)
+
+          - task: Docker@2
+            displayName: Push image to Docker Hub (latest + build id tags)
+            inputs:
+              command: push
+              containerRegistry: $(dockerRegistryServiceConnection)
+              repository: $(dockerHubRepository)
+              tags: |
+                latest
+                $(Build.BuildId)

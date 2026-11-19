@@ -1,0 +1,283 @@
+
+
+########## Task 1: versions and cluster  [17:43:32] ##########
+kind v0.33.0 go1.27.0 darwin/arm64
+Client Version: v1.37.1
+Kustomize Version: v5.8.1
+Cgroup=2
+Server Version: v1.37.0
+NAME                      STATUS   ROLES           AGE   VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE                       KERNEL-VERSION            CONTAINER-RUNTIME
+lectures-control-plane    Ready    control-plane   11m   v1.37.0   172.19.0.3    <none>        Debian GNU/Linux 13 (trixie)   7.0.14-linuxkit (arm64)   containerd://2.3.4
+lectures-control-plane2   Ready    control-plane   10m   v1.37.0   172.19.0.6    <none>        Debian GNU/Linux 13 (trixie)   7.0.14-linuxkit (arm64)   containerd://2.3.4
+lectures-control-plane3   Ready    control-plane   10m   v1.37.0   172.19.0.5    <none>        Debian GNU/Linux 13 (trixie)   7.0.14-linuxkit (arm64)   containerd://2.3.4
+lectures-worker           Ready    <none>          10m   v1.37.0   172.19.0.2    <none>        Debian GNU/Linux 13 (trixie)   7.0.14-linuxkit (arm64)   containerd://2.3.4
+lectures-worker2          Ready    <none>          10m   v1.37.0   172.19.0.4    <none>        Debian GNU/Linux 13 (trixie)   7.0.14-linuxkit (arm64)   containerd://2.3.4
+NAME                                              READY   STATUS    RESTARTS        AGE   IP           NODE                      NOMINATED NODE   READINESS GATES
+coredns-559f6c778d-76qk7                          1/1     Running   0               11m   10.244.0.4   lectures-control-plane    <none>           <none>
+coredns-559f6c778d-vwlbf                          1/1     Running   0               11m   10.244.0.3   lectures-control-plane    <none>           <none>
+etcd-lectures-control-plane                       1/1     Running   0               11m   172.19.0.3   lectures-control-plane    <none>           <none>
+etcd-lectures-control-plane2                      1/1     Running   0               10m   172.19.0.6   lectures-control-plane2   <none>           <none>
+etcd-lectures-control-plane3                      1/1     Running   0               10m   172.19.0.5   lectures-control-plane3   <none>           <none>
+kindnet-486zj                                     1/1     Running   0               11m   172.19.0.3   lectures-control-plane    <none>           <none>
+kindnet-69z4h                                     1/1     Running   0               10m   172.19.0.4   lectures-worker2          <none>           <none>
+kindnet-gk27j                                     1/1     Running   0               10m   172.19.0.6   lectures-control-plane2   <none>           <none>
+kindnet-slgfx                                     1/1     Running   0               10m   172.19.0.5   lectures-control-plane3   <none>           <none>
+kindnet-tsrvb                                     1/1     Running   0               10m   172.19.0.2   lectures-worker           <none>           <none>
+kube-apiserver-lectures-control-plane             1/1     Running   0               11m   172.19.0.3   lectures-control-plane    <none>           <none>
+kube-apiserver-lectures-control-plane2            1/1     Running   0               10m   172.19.0.6   lectures-control-plane2   <none>           <none>
+kube-apiserver-lectures-control-plane3            1/1     Running   0               10m   172.19.0.5   lectures-control-plane3   <none>           <none>
+kube-controller-manager-lectures-control-plane    1/1     Running   1 (31s ago)     11m   172.19.0.3   lectures-control-plane    <none>           <none>
+kube-controller-manager-lectures-control-plane2   1/1     Running   1 (4m36s ago)   10m   172.19.0.6   lectures-control-plane2   <none>           <none>
+kube-controller-manager-lectures-control-plane3   1/1     Running   0               10m   172.19.0.5   lectures-control-plane3   <none>           <none>
+kube-proxy-2pxcs                                  1/1     Running   0               10m   172.19.0.2   lectures-worker           <none>           <none>
+kube-proxy-47nht                                  1/1     Running   0               11m   172.19.0.3   lectures-control-plane    <none>           <none>
+kube-proxy-d62ff                                  1/1     Running   0               10m   172.19.0.4   lectures-worker2          <none>           <none>
+kube-proxy-jktbn                                  1/1     Running   0               10m   172.19.0.6   lectures-control-plane2   <none>           <none>
+kube-proxy-lzt5p                                  1/1     Running   0               10m   172.19.0.5   lectures-control-plane3   <none>           <none>
+kube-scheduler-lectures-control-plane             1/1     Running   1 (31s ago)     11m   172.19.0.3   lectures-control-plane    <none>           <none>
+kube-scheduler-lectures-control-plane2            1/1     Running   0               10m   172.19.0.6   lectures-control-plane2   <none>           <none>
+kube-scheduler-lectures-control-plane3            1/1     Running   0               10m   172.19.0.5   lectures-control-plane3   <none>           <none>
+
+
+########## Task 2: etcd data dir, manifest, membership, leader  [17:43:33] ##########
+total 16K
+drwx------ 4 root root 4.0K Nov 19 16:32 .
+drwx------ 3 root root 4.0K Nov 19 16:32 ..
+drwx------ 2 root root 4.0K Nov 19 16:42 snap
+drwx------ 2 root root 4.0K Nov 19 16:32 wal
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kubeadm.kubernetes.io/etcd.advertise-client-urls: https://172.19.0.3:2379
+  labels:
+    component: etcd
+    tier: control-plane
+  name: etcd
+  namespace: kube-system
+spec:
+  containers:
+  - command:
+    - etcd
+    - --advertise-client-urls=https://172.19.0.3:2379
+    - --cert-file=/etc/kubernetes/pki/etcd/server.crt
+    - --client-cert-auth=true
+    - --data-dir=/var/lib/etcd
+    - --feature-gates=InitialCorruptCheck=true
+    - --initial-advertise-peer-urls=https://172.19.0.3:2380
+    - --initial-cluster=lectures-control-plane=https://172.19.0.3:2380
+    - --key-file=/etc/kubernetes/pki/etcd/server.key
+    - --listen-client-urls=https://127.0.0.1:2379,https://172.19.0.3:2379
+    - --listen-metrics-urls=http://127.0.0.1:2381
+    - --listen-peer-urls=https://172.19.0.3:2380
+    - --name=lectures-control-plane
+    - --peer-cert-file=/etc/kubernetes/pki/etcd/peer.crt
+    - --peer-client-cert-auth=true
+    - --peer-key-file=/etc/kubernetes/pki/etcd/peer.key
+    - --peer-trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+    - --snapshot-count=10000
+    - --trusted-ca-file=/etc/kubernetes/pki/etcd/ca.crt
+    - --watch-progress-notify-interval=5s
+    image: registry.k8s.io/etcd:3.7.0-0
+    imagePullPolicy: IfNotPresent
+    livenessProbe:
+      failureThreshold: 8
+      httpGet:
+        host: 127.0.0.1
+        path: /livez
+        port: probe-port
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 15
+    name: etcd
+    ports:
+    - containerPort: 2381
+      name: probe-port
+      protocol: TCP
+    readinessProbe:
+      failureThreshold: 3
+      httpGet:
+        host: 127.0.0.1
+        path: /readyz
+        port: probe-port
+        scheme: HTTP
+      periodSeconds: 1
+      timeoutSeconds: 15
+    resources:
+      requests:
+        cpu: 100m
+        memory: 100Mi
+    startupProbe:
+      failureThreshold: 24
+      httpGet:
+        host: 127.0.0.1
+        path: /readyz
+        port: probe-port
+        scheme: HTTP
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      timeoutSeconds: 15
+    volumeMounts:
+    - mountPath: /var/lib/etcd
+      name: etcd-data
+    - mountPath: /etc/kubernetes/pki/etcd
+      name: etcd-certs
+  hostNetwork: true
+  priority: 2000001000
+  priorityClassName: system-node-critical
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  volumes:
+  - hostPath:
+      path: /etc/kubernetes/pki/etcd
+      type: DirectoryOrCreate
+    name: etcd-certs
+  - hostPath:
+      path: /var/lib/etcd
+      type: DirectoryOrCreate
+    name: etcd-data
+status: {}
+┌──────────────────┬─────────┬─────────────────────────┬─────────────────────────┬─────────────────────────┬────────────┐
+│        ID        │ STATUS  │          NAME           │       PEER ADDRS        │      CLIENT ADDRS       │ IS LEARNER │
+├──────────────────┼─────────┼─────────────────────────┼─────────────────────────┼─────────────────────────┼────────────┤
+│  9ac801675b20abf │ started │ lectures-control-plane3 │ https://172.19.0.5:2380 │ https://172.19.0.5:2379 │      false │
+│ 5e08fa760d4f83c1 │ started │ lectures-control-plane2 │ https://172.19.0.6:2380 │ https://172.19.0.6:2379 │      false │
+│ c63fc327fd7550b9 │ started │  lectures-control-plane │ https://172.19.0.3:2380 │ https://172.19.0.3:2379 │      false │
+└──────────────────┴─────────┴─────────────────────────┴─────────────────────────┴─────────────────────────┴────────────┘
+┌─────────────────────────┬──────────────────┬─────────┬─────────────────┬─────────┬────────┬───────────────────────┬────────┬───────────┬────────────┬───────────┬────────────┬────────────────────┬────────┬──────────────────────────┬───────────────────┐
+│        ENDPOINT         │        ID        │ VERSION │ STORAGE VERSION │ DB SIZE │ IN USE │ PERCENTAGE NOT IN USE │ QUOTA  │ IS LEADER │ IS LEARNER │ RAFT TERM │ RAFT INDEX │ RAFT APPLIED INDEX │ ERRORS │ DOWNGRADE TARGET VERSION │ DOWNGRADE ENABLED │
+├─────────────────────────┼──────────────────┼─────────┼─────────────────┼─────────┼────────┼───────────────────────┼────────┼───────────┼────────────┼───────────┼────────────┼────────────────────┼────────┼──────────────────────────┼───────────────────┤
+│ https://172.19.0.5:2379 │  9ac801675b20abf │   3.7.0 │           3.7.0 │  4.8 MB │ 2.6 MB │                   45% │ 2.1 GB │     false │      false │         4 │       3308 │               3308 │        │                          │             false │
+│ https://172.19.0.6:2379 │ 5e08fa760d4f83c1 │   3.7.0 │           3.7.0 │  4.8 MB │ 2.6 MB │                   46% │ 2.1 GB │      true │      false │         4 │       3308 │               3308 │        │                          │             false │
+│ https://172.19.0.3:2379 │ c63fc327fd7550b9 │   3.7.0 │           3.7.0 │  4.8 MB │ 2.6 MB │                   46% │ 2.1 GB │     false │      false │         4 │       3308 │               3308 │        │                          │             false │
+└─────────────────────────┴──────────────────┴─────────┴─────────────────┴─────────┴────────┴───────────────────────┴────────┴───────────┴────────────┴───────────┴────────────┴────────────────────┴────────┴──────────────────────────┴───────────────────┘
+https://172.19.0.3:2379 is healthy: successfully committed proposal: took = 4.168541ms
+https://172.19.0.6:2379 is healthy: successfully committed proposal: took = 5.843708ms
+https://172.19.0.5:2379 is healthy: successfully committed proposal: took = 5.889709ms
+>>> STATE before failure: 3 of 3, leader=lectures-control-plane2 term=4
+
+
+########## Task 3: baseline write with quorum 3/3  [17:43:34] ##########
+namespace "etcd-lab" deleted
+namespace/etcd-lab created
+configmap/quorum-baseline created
+/registry/configmaps/etcd-lab/kube-root-ca.crt
+
+/registry/configmaps/etcd-lab/quorum-baseline
+
+FAILED_NODE(leader)=lectures-control-plane2 SURVIVOR_NODE=lectures-control-plane SECOND_NODE=lectures-control-plane3
+
+
+########## Task 3: pause the leader (lectures-control-plane2) -> 2 of 3 left  [17:43:39] ##########
+lectures-control-plane2
+{"level":"warn","ts":"2026-11-19T16:44:00.126040Z","logger":"etcd-client","caller":"v3/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x53dca0a34400/172.19.0.6:2379","peer":"Peer{Addr: <nil>, LocalAddr: <nil>, AuthInfo: <nil>}","method":"/etcdserverpb.Maintenance/Status","attempt":0,"error":"rpc error: code = DeadlineExceeded desc = context deadline exceeded while waiting for connections to become ready"}
+Failed to get the status of endpoint https://172.19.0.6:2379 (context deadline exceeded)
+┌─────────────────────────┬──────────────────┬─────────┬─────────────────┬─────────┬────────┬───────────────────────┬────────┬───────────┬────────────┬───────────┬────────────┬────────────────────┬────────┬──────────────────────────┬───────────────────┐
+│        ENDPOINT         │        ID        │ VERSION │ STORAGE VERSION │ DB SIZE │ IN USE │ PERCENTAGE NOT IN USE │ QUOTA  │ IS LEADER │ IS LEARNER │ RAFT TERM │ RAFT INDEX │ RAFT APPLIED INDEX │ ERRORS │ DOWNGRADE TARGET VERSION │ DOWNGRADE ENABLED │
+├─────────────────────────┼──────────────────┼─────────┼─────────────────┼─────────┼────────┼───────────────────────┼────────┼───────────┼────────────┼───────────┼────────────┼────────────────────┼────────┼──────────────────────────┼───────────────────┤
+│ https://172.19.0.5:2379 │  9ac801675b20abf │   3.7.0 │           3.7.0 │  4.8 MB │ 2.7 MB │                   44% │ 2.1 GB │      true │      false │         5 │       3365 │               3365 │        │                          │             false │
+│ https://172.19.0.3:2379 │ c63fc327fd7550b9 │   3.7.0 │           3.7.0 │  4.8 MB │ 2.7 MB │                   44% │ 2.1 GB │     false │      false │         5 │       3400 │               3400 │        │                          │             false │
+└─────────────────────────┴──────────────────┴─────────┴─────────────────┴─────────┴────────┴───────────────────────┴────────┴───────────┴────────────┴───────────┴────────────┴────────────────────┴────────┴──────────────────────────┴───────────────────┘
+time="2026-11-19T16:44:00Z" level=fatal msg="execing command in container 6135937b2b269402395503c393ffe58f3f83a27e7e531718f2653c01906822b1: command terminated with exit code 1"
+┌────────────────────────┬──────────────────┬─────────┬─────────────────┬─────────┬────────┬───────────────────────┬────────┬───────────┬────────────┬───────────┬────────────┬────────────────────┬────────┬──────────────────────────┬───────────────────┐
+│        ENDPOINT        │        ID        │ VERSION │ STORAGE VERSION │ DB SIZE │ IN USE │ PERCENTAGE NOT IN USE │ QUOTA  │ IS LEADER │ IS LEARNER │ RAFT TERM │ RAFT INDEX │ RAFT APPLIED INDEX │ ERRORS │ DOWNGRADE TARGET VERSION │ DOWNGRADE ENABLED │
+├────────────────────────┼──────────────────┼─────────┼─────────────────┼─────────┼────────┼───────────────────────┼────────┼───────────┼────────────┼───────────┼────────────┼────────────────────┼────────┼──────────────────────────┼───────────────────┤
+│ https://127.0.0.1:2379 │ c63fc327fd7550b9 │   3.7.0 │           3.7.0 │  4.8 MB │ 2.7 MB │                   44% │ 2.1 GB │     false │      false │         5 │       3400 │               3400 │        │                          │             false │
+└────────────────────────┴──────────────────┴─────────┴─────────────────┴─────────┴────────┴───────────────────────┴────────┴───────────┴────────────┴───────────┴────────────┴────────────────────┴────────┴──────────────────────────┴───────────────────┘
+┌──────────────────┬─────────┬─────────────────────────┬─────────────────────────┬─────────────────────────┬────────────┐
+│        ID        │ STATUS  │          NAME           │       PEER ADDRS        │      CLIENT ADDRS       │ IS LEARNER │
+├──────────────────┼─────────┼─────────────────────────┼─────────────────────────┼─────────────────────────┼────────────┤
+│  9ac801675b20abf │ started │ lectures-control-plane3 │ https://172.19.0.5:2380 │ https://172.19.0.5:2379 │      false │
+│ 5e08fa760d4f83c1 │ started │ lectures-control-plane2 │ https://172.19.0.6:2380 │ https://172.19.0.6:2379 │      false │
+│ c63fc327fd7550b9 │ started │  lectures-control-plane │ https://172.19.0.3:2380 │ https://172.19.0.3:2379 │      false │
+└──────────────────┴─────────┴─────────────────────────┴─────────────────────────┴─────────────────────────┴────────────┘
+>>> STATE after first failure: 2 of 3, leader=lectures-control-plane3 term=5
+configmap/quorum-two created
+apiVersion: v1
+data:
+  stage: two
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2026-11-19T16:44:00Z"
+  name: quorum-two
+  namespace: etcd-lab
+  resourceVersion: "2704"
+  uid: 966c9ab1-b736-44dd-9ee4-9bda7fe36272
+
+
+########## Task 4: pause the second node (lectures-control-plane3) -> 1 of 3, quorum lost  [17:44:00] ##########
+lectures-control-plane3
+17:44:00
+┌────────────────────────┬──────────────────┬─────────┬─────────────────┬─────────┬────────┬───────────────────────┬────────┬───────────┬────────────┬───────────┬────────────┬────────────────────┬────────┬──────────────────────────┬───────────────────┐
+│        ENDPOINT        │        ID        │ VERSION │ STORAGE VERSION │ DB SIZE │ IN USE │ PERCENTAGE NOT IN USE │ QUOTA  │ IS LEADER │ IS LEARNER │ RAFT TERM │ RAFT INDEX │ RAFT APPLIED INDEX │ ERRORS │ DOWNGRADE TARGET VERSION │ DOWNGRADE ENABLED │
+├────────────────────────┼──────────────────┼─────────┼─────────────────┼─────────┼────────┼───────────────────────┼────────┼───────────┼────────────┼───────────┼────────────┼────────────────────┼────────┼──────────────────────────┼───────────────────┤
+│ https://127.0.0.1:2379 │ c63fc327fd7550b9 │   3.7.0 │           3.7.0 │  4.8 MB │ 2.7 MB │                   44% │ 2.1 GB │     false │      false │         5 │       3401 │               3401 │        │                          │             false │
+└────────────────────────┴──────────────────┴─────────┴─────────────────┴─────────┴────────┴───────────────────────┴────────┴───────────┴────────────┴───────────┴────────────┴────────────────────┴────────┴──────────────────────────┴───────────────────┘
+{"level":"warn","ts":"2026-11-19T16:44:08.104255Z","logger":"client","caller":"v3/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x5d7aad28cc00/127.0.0.1:2379","peer":"Peer{Addr: '127.0.0.1:2379', LocalAddr: '127.0.0.1:39370', AuthInfo: 'tls'}","method":"/etcdserverpb.KV/Range","attempt":0,"error":"rpc error: code = Unavailable desc = etcdserver: request timed out"}
+{"level":"warn","ts":"2026-11-19T16:44:11.098228Z","logger":"client","caller":"v3/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x5d7aad28cc00/127.0.0.1:2379","peer":"Peer{Addr: '127.0.0.1:2379', LocalAddr: '127.0.0.1:39370', AuthInfo: 'tls'}","method":"/etcdserverpb.KV/Range","attempt":1,"error":"rpc error: code = DeadlineExceeded desc = context deadline exceeded"}
+https://127.0.0.1:2379 is unhealthy: failed to commit proposal: context deadline exceeded
+Error: unhealthy cluster
+time="2026-11-19T16:44:11Z" level=fatal msg="execing command in container 6135937b2b269402395503c393ffe58f3f83a27e7e531718f2653c01906822b1: command terminated with exit code 1"
+--- kubectl create (10s timeout) ---
+error: failed to create configmap: Post "https://127.0.0.1:6443/api/v1/namespaces/etcd-lab/configmaps?fieldManager=kubectl-create&fieldValidation=Strict&timeout=10s": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
+(exit=1 after 10s)
+--- direct etcd write / linearizable read / serializable read ---
+{"level":"warn","ts":"2026-11-19T16:44:28.424214Z","logger":"etcd-client","caller":"v3/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x865182f6c00/127.0.0.1:2379","peer":"Peer{Addr: '127.0.0.1:2379', LocalAddr: '127.0.0.1:46278', AuthInfo: 'tls'}","method":"/etcdserverpb.KV/Put","attempt":0,"error":"rpc error: code = DeadlineExceeded desc = context deadline exceeded"}
+{"level":"warn","ts":"2026-11-19T16:44:31.406548Z","logger":"etcd-client","caller":"v3/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x865182f6c00/127.0.0.1:2379","peer":"Peer{Addr: '127.0.0.1:2379', LocalAddr: '127.0.0.1:46278', AuthInfo: 'tls'}","method":"/etcdserverpb.KV/Put","attempt":1,"error":"rpc error: code = DeadlineExceeded desc = context deadline exceeded"}
+Error: context deadline exceeded
+time="2026-11-19T16:44:31Z" level=fatal msg="execing command in container 6135937b2b269402395503c393ffe58f3f83a27e7e531718f2653c01906822b1: command terminated with exit code 1"
+(put exit=1)
+{"level":"warn","ts":"2026-11-19T16:44:41.550482Z","logger":"etcd-client","caller":"v3/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x6408952fee00/127.0.0.1:2379","peer":"Peer{Addr: '127.0.0.1:2379', LocalAddr: '127.0.0.1:60864', AuthInfo: 'tls'}","method":"/etcdserverpb.KV/Range","attempt":0,"error":"rpc error: code = DeadlineExceeded desc = context deadline exceeded"}
+Error: context deadline exceeded
+time="2026-11-19T16:44:41Z" level=fatal msg="execing command in container 6135937b2b269402395503c393ffe58f3f83a27e7e531718f2653c01906822b1: command terminated with exit code 1"
+(linearizable get exit=1)
+(serializable get exit=0)
+
+
+########## Task 5: recovery  [17:44:41] ##########
+lectures-control-plane3
+https://127.0.0.1:2379 is healthy: successfully committed proposal: took = 52.074709ms
+{"level":"warn","ts":"2026-11-19T16:45:02.042878Z","logger":"etcd-client","caller":"v3/retry_interceptor.go:68","msg":"retrying of unary invoker failed","target":"etcd-endpoints://0x1e16f4914400/172.19.0.6:2379","peer":"Peer{Addr: <nil>, LocalAddr: <nil>, AuthInfo: <nil>}","method":"/etcdserverpb.Maintenance/Status","attempt":0,"error":"rpc error: code = DeadlineExceeded desc = context deadline exceeded while waiting for connections to become ready"}
+Failed to get the status of endpoint https://172.19.0.6:2379 (context deadline exceeded)
+┌─────────────────────────┬──────────────────┬─────────┬─────────────────┬─────────┬────────┬───────────────────────┬────────┬───────────┬────────────┬───────────┬────────────┬────────────────────┬────────┬──────────────────────────┬───────────────────┐
+│        ENDPOINT         │        ID        │ VERSION │ STORAGE VERSION │ DB SIZE │ IN USE │ PERCENTAGE NOT IN USE │ QUOTA  │ IS LEADER │ IS LEARNER │ RAFT TERM │ RAFT INDEX │ RAFT APPLIED INDEX │ ERRORS │ DOWNGRADE TARGET VERSION │ DOWNGRADE ENABLED │
+├─────────────────────────┼──────────────────┼─────────┼─────────────────┼─────────┼────────┼───────────────────────┼────────┼───────────┼────────────┼───────────┼────────────┼────────────────────┼────────┼──────────────────────────┼───────────────────┤
+│ https://172.19.0.5:2379 │  9ac801675b20abf │   3.7.0 │           3.7.0 │  4.8 MB │ 2.9 MB │                   40% │ 2.1 GB │      true │      false │         5 │       3500 │               3500 │        │                          │             false │
+│ https://172.19.0.3:2379 │ c63fc327fd7550b9 │   3.7.0 │           3.7.0 │  4.8 MB │ 3.0 MB │                   38% │ 2.1 GB │     false │      false │         5 │       3554 │               3554 │        │                          │             false │
+└─────────────────────────┴──────────────────┴─────────┴─────────────────┴─────────┴────────┴───────────────────────┴────────┴───────────┴────────────┴───────────┴────────────┴────────────────────┴────────┴──────────────────────────┴───────────────────┘
+time="2026-11-19T16:45:02Z" level=fatal msg="execing command in container 6135937b2b269402395503c393ffe58f3f83a27e7e531718f2653c01906822b1: command terminated with exit code 1"
+>>> STATE after first recovery: 2 of 3, leader=lectures-control-plane3 term=5
+Error from server (NotFound): configmaps "quorum-lost" not found
+configmap/quorum-restored created
+lectures-control-plane2
+https://172.19.0.6:2379 is healthy: successfully committed proposal: took = 5.039459ms
+https://172.19.0.5:2379 is healthy: successfully committed proposal: took = 7.021333ms
+https://172.19.0.3:2379 is healthy: successfully committed proposal: took = 7.329292ms
+┌─────────────────────────┬──────────────────┬─────────┬─────────────────┬─────────┬────────┬───────────────────────┬────────┬───────────┬────────────┬───────────┬────────────┬────────────────────┬────────┬──────────────────────────┬───────────────────┐
+│        ENDPOINT         │        ID        │ VERSION │ STORAGE VERSION │ DB SIZE │ IN USE │ PERCENTAGE NOT IN USE │ QUOTA  │ IS LEADER │ IS LEARNER │ RAFT TERM │ RAFT INDEX │ RAFT APPLIED INDEX │ ERRORS │ DOWNGRADE TARGET VERSION │ DOWNGRADE ENABLED │
+├─────────────────────────┼──────────────────┼─────────┼─────────────────┼─────────┼────────┼───────────────────────┼────────┼───────────┼────────────┼───────────┼────────────┼────────────────────┼────────┼──────────────────────────┼───────────────────┤
+│ https://172.19.0.5:2379 │  9ac801675b20abf │   3.7.0 │           3.7.0 │  4.8 MB │ 3.2 MB │                   34% │ 2.1 GB │      true │      false │         5 │       3676 │               3676 │        │                          │             false │
+│ https://172.19.0.6:2379 │ 5e08fa760d4f83c1 │   3.7.0 │           3.7.0 │  4.8 MB │ 3.1 MB │                   35% │ 2.1 GB │     false │      false │         5 │       3676 │               3676 │        │                          │             false │
+│ https://172.19.0.3:2379 │ c63fc327fd7550b9 │   3.7.0 │           3.7.0 │  4.8 MB │ 3.2 MB │                   35% │ 2.1 GB │     false │      false │         5 │       3677 │               3677 │        │                          │             false │
+└─────────────────────────┴──────────────────┴─────────┴─────────────────┴─────────┴────────┴───────────────────────┴────────┴───────────┴────────────┴───────────┴────────────┴────────────────────┴────────┴──────────────────────────┴───────────────────┘
+>>> STATE after full recovery: 3 of 3, leader=lectures-control-plane3 term=5
+NAME               DATA   AGE
+kube-root-ca.crt   1      104s
+quorum-baseline    1      104s
+quorum-restored    1      21s
+quorum-two         1      83s
+NAME                      STATUS   ROLES           AGE   VERSION
+lectures-control-plane    Ready    control-plane   13m   v1.37.0
+lectures-control-plane2   Ready    control-plane   12m   v1.37.0
+lectures-control-plane3   Ready    control-plane   12m   v1.37.0
+lectures-worker           Ready    <none>          12m   v1.37.0
+lectures-worker2          Ready    <none>          12m   v1.37.0
+
+
+########## SUMMARY (fill the report table from here)  [17:45:23] ##########
+Before failure          | 3 of 3        | leader=lectures-control-plane2 term=4
+After first failure     | 2 of 3        | leader=lectures-control-plane3 term=5
+After second failure    | 1 of 3        | no leader / no quorum (see Task 4 output)
+After recovery          | 2 of 3 -> 3/3 | leader=lectures-control-plane3 term=5 -> leader=lectures-control-plane3 term=5

@@ -1,0 +1,15 @@
+server {
+  listen 80;
+  root /usr/share/nginx/html;
+  index index.html;
+
+  # Handy for port-forward access; in Kubernetes the Ingress routes /api directly to the backend.
+  location /api/ {
+    proxy_pass ${API_UPSTREAM};
+    proxy_set_header Host $host;
+  }
+
+  location / {
+    try_files $uri $uri/ /index.html;
+  }
+}

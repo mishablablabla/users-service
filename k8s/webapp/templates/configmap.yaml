@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: users-api-cm
+  labels: {{- include "webapp.labels" . | nindent 4 }}
+data:
+  # Schema is created by the migration Job, not by the app
+  AUTO_CREATE_TABLES: "false"
